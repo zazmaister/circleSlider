@@ -1,4 +1,9 @@
-class CircularSlider {
+/** Class representing a circular slider. */
+class CircularSlider {  
+  /**
+   * Creates a CircularSlider
+   * @param  {string} containerId - Html id of container.
+   */
   constructor(containerId) {
     this.xmlns = 'http://www.w3.org/2000/svg';
     
@@ -21,6 +26,11 @@ class CircularSlider {
     svgElem.appendChild(this.svgGroup);
   }
 
+  
+  /**
+   * Adds slider to sliders array and renders it.
+   * @param  {Slider} slider - Accepts Slider instance.
+   */
   addSlider(slider) {
     this.sliders.push(slider);
     // TODO: check if slider already exists in array... check settings and 
@@ -28,12 +38,17 @@ class CircularSlider {
     this.renderSlider(slider);
   }
 
+  
+  /**
+   * Renders slider instance.
+   * @param  {Slider} slider - Accepts Slider instance.
+   */
   renderSlider(slider) {
-    var sliderSvg = slider.getSvg({
-      containerWidth: this.settings.containerWidth,
-      dashesWidth: this.settings.backgroundCircleDashesWidth,
-      wantedSpacesWidth: this.settings.backgroundCircleWantedSpacesWidth
-    });
+    var sliderSvg = slider.getSvg(
+      this.settings.containerWidth,
+      this.settings.backgroundCircleDashesWidth,
+      this.settings.backgroundCircleWantedSpacesWidth
+    );
     this.svgGroup.appendChild(sliderSvg);
   }
 }
