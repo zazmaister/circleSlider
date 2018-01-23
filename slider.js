@@ -1,3 +1,4 @@
+var mouseDown = false;
 /** Class representing a slider. */
 class Slider {
   
@@ -31,6 +32,7 @@ class Slider {
       throw new Error('There is no such container. Change container name.');
     }
     
+    
     // Create svg element if it doesnt exists inside this container
     this.svgElem = document.getElementById(this.settings.container).getElementsByTagName('svg')[0];
     if(!this.svgElem) {
@@ -42,11 +44,19 @@ class Slider {
       this.container.element.appendChild(this.svgElem);
     }
 
+    var rect = this.svgElem.getBoundingClientRect();
+    console.log(rect);
+
+
+
     this.renderSlider(
       this.settings.containerWidth, 
       this.settings.backgroundCircleDashesWidth,
       this.settings.backgroundCircleWantedSpacesWidth  
     );
+
+    this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this));
+    this.svgElem.addEventListener('mouseup', this.mouseUp.bind(this));
   }
 
   /**
@@ -57,7 +67,7 @@ class Slider {
    */
   renderSlider(containerWidth, dashesWidth, wantedSpacesWidth) {
     // Create slider group of all slider elements
-    var svgGroup = document.createElementNS(this.xmlns, "g");
+    var svgGroup = document.createElementNS(this.xmlns, 'g');
     
     // Create backgound dashed circle
     const spacesWidth = this.calcSpaceWidth(
@@ -66,9 +76,9 @@ class Slider {
     )
     var backgroundCircle = document.createElementNS(this.xmlns, 'circle');
     backgroundCircle.setAttribute('class', 'circle');
+    backgroundCircle.setAttribute('r', this.settings.radius);
     backgroundCircle.setAttribute('cx', containerWidth / 2);
     backgroundCircle.setAttribute('cy', containerWidth / 2);
-    backgroundCircle.setAttribute('r', this.settings.radius);
     backgroundCircle.setAttribute('fill', 'none');
     backgroundCircle.setAttribute('stroke-dasharray', `${dashesWidth}, ${spacesWidth}`);
     svgGroup.appendChild(backgroundCircle);
@@ -76,9 +86,9 @@ class Slider {
     // Create holder
     var holderCenter = this.getHolderCenter(0);
     var holderCircle = document.createElementNS(this.xmlns, 'circle');
+    holderCircle.setAttribute('r', this.settings.hodlerDiameter / 2);
     holderCircle.setAttribute('cx', holderCenter.x);
     holderCircle.setAttribute('cy', holderCenter.y);
-    holderCircle.setAttribute('r', this.settings.hodlerDiameter / 2);
     holderCircle.style.fill = this.settings.holderFillColor;
     holderCircle.style.stroke = this.settings.holderStrokeColor;
     holderCircle.style.strokeWidth = this.settings.holderStrokeWidth;
@@ -103,7 +113,27 @@ class Slider {
     const x = this.settings.containerWidth / 2 + this.settings.radius * Math.cos(angle);
     const y = this.settings.containerWidth / 2 + this.settings.radius * Math.sin(angle);
 
-    return {x,y};
+    return {x, y};
+  }
+
+  mouseDown(event) {
+    const coords = this.getCoordsRelativelyToElementsCenter(event);
+    mouseDown = true;
+    console.log(mouseDown);
+  }
+
+  mouseUp(event) {
+    const coords = this.getCoordsRelativelyToElementsCenter(event);
+    mouseDown = false;
+    console.log(mouseDown);
+  }
+
+  getCoordsRelativelyToElementsCenter(event) {
+    const rectangle = this.svgElem.getBoundingClientRect();
+    var x = event.clientX - rectangle.x - (rectangle.width / 2);
+    var y = event.clientY - rectangle.y - (rectangle.height / 2);
+    console.log(x,y);
+    return {x, y};
   }
 
   getChildByClassName(element, childClassName) {
@@ -125,4 +155,9 @@ new Slider({
 new Slider({
   container: 'container',
   radius: 50
+});
+
+new Slider({
+  container: 'container',
+  radius: 150
 });

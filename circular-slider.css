@@ -2,3 +2,9 @@
   stroke-width: 20;
   stroke: grey;
 }
+
+#container {
+  padding: 40px;
+  width: 480px;
+  margin: 0 auto;
+}
