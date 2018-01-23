@@ -2,45 +2,51 @@ class CircularSlider {
   constructor(containerId) {
     this.xmlns = 'http://www.w3.org/2000/svg';
     
-    this.options = {
+    this.sliders = [];
+    this.settings = {
       backgroundCircleDashesWidth: 6,
-      backgroundCircleWantedSpacesWidth: 3
+      backgroundCircleWantedSpacesWidth: 3,
+      containerWidth: 400
     };
     this.container = document.getElementById(containerId);
     
-    this.svgElem = document.createElementNS (this.xmlns, 'svg');
-    this.svgElem.setAttribute('version', 1.1);
-    this.svgElem.setAttribute('width', 400);
-    this.svgElem.setAttribute('height', 400);
-    this.svgElem.setAttribute('viewPort', `${400}, ${400}` );
+    var svgElem = document.createElementNS(this.xmlns, 'svg');
+    svgElem.setAttribute('version', 1.1);
+    svgElem.setAttribute('width', this.settings.containerWidth);
+    svgElem.setAttribute('height', this.settings.containerWidth);
+    svgElem.setAttribute('viewPort', `${this.settings.containerWidth}, ${this.settings.containerWidth}` );
+    this.container.appendChild(svgElem);
 
-    this.container.appendChild(this.svgElem);
+    this.svgGroup = document.createElementNS(this.xmlns, "g");
+    svgElem.appendChild(this.svgGroup);
   }
 
-  drawSlider(slider) {
-    // Create backgound dashed circle
-    var backgrounfCircleSpacesWidth = this.calcSpaceWidth( 2 * Math.PI * slider.settings.radius);
-    var sliderSvg = slider.getSvg();
-    sliderSvg.setAttribute('width', 400);
-    sliderSvg.setAttribute('height', 400);
-    sliderSvg.setAttribute('cx', 200);
-    sliderSvg.setAttribute('cy', 200);
-    sliderSvg.setAttribute('stroke-dasharray', `${this.options.backgroundCircleDashesWidth}, ${backgrounfCircleSpacesWidth}` );
-    this.svgElem.appendChild(sliderSvg);
+  addSlider(slider) {
+    this.sliders.push(slider);
+    // TODO: check if slider already exists in array... check settings and 
+    // print errors in case that slider overlaps another one
+    this.renderSlider(slider);
   }
 
-  // Calculate space widthbetween dashes in background circle
-  calcSpaceWidth(circumference) {
-    var numberOfDashes = circumference / (this.options.backgroundCircleDashesWidth + this.options.backgroundCircleWantedSpacesWidth);
-
-    return (circumference / Math.floor(numberOfDashes)) - this.options.backgroundCircleDashesWidth;
+  renderSlider(slider) {
+    var sliderSvg = slider.getSvg({
+      containerWidth: this.settings.containerWidth,
+      dashesWidth: this.settings.backgroundCircleDashesWidth,
+      wantedSpacesWidth: this.settings.backgroundCircleWantedSpacesWidth
+    });
+    this.svgGroup.appendChild(sliderSvg);
   }
 }
 var circularSlider = new CircularSlider('container');
 
-var slider = new Slider({radius: 105});
+var slider = new Slider({radius: 100});
 
+var slider2 = new Slider({radius: 70});
+
+var slider3 = new Slider({radius: 40});
 
 console.log(circularSlider.container);
 
-circularSlider.drawSlider(slider);
+circularSlider.addSlider(slider);
+circularSlider.addSlider(slider2);
+circularSlider.addSlider(slider3);
