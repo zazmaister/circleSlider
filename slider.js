@@ -65,6 +65,7 @@ class Slider {
 
     this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this));
     this.svgElem.addEventListener('mouseup', this.mouseUp.bind(this));
+    this.svgElem.addEventListener('mousemove', this.mouseMove.bind(this));
   }
 
   /**
@@ -169,6 +170,14 @@ class Slider {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = false;
     this.isActive = false;
+  }
+  // TODO
+  mouseMove(event) {
+    const coords = this.getCoordsRelativelyToElementsCenter(event);
+
+    if(mouseDown && this.isActive) {
+      this.rerenderSlider(coords);
+    }
   }
 
   areCoordsInsideSliderBar(coords) {//check
