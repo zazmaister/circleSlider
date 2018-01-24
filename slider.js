@@ -15,6 +15,8 @@ class Slider {
     this.settings = {
       backgroundCircleDashesWidth: 6,
       backgroundCircleWantedSpacesWidth: 3,
+      backgroundCircleStrokeWidth: 20,
+      backgroundCircleStrokeColor: 'grey',
       hodlerDiameter: 24,
       holderFillColor: 'white',
       holderStrokeColor: 'grey',
@@ -81,6 +83,8 @@ class Slider {
     backgroundCircle.setAttribute('cy', containerWidth / 2);
     backgroundCircle.setAttribute('fill', 'none');
     backgroundCircle.setAttribute('stroke-dasharray', `${dashesWidth}, ${spacesWidth}`);
+    backgroundCircle.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
+    backgroundCircle.style.stroke = this.settings.backgroundCircleStrokeColor;
     svgGroup.appendChild(backgroundCircle);
 
     // Create holder
@@ -116,23 +120,37 @@ class Slider {
     return {x, y};
   }
 
+  // TODO
   mouseDown(event) {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = true;
     console.log(mouseDown);
   }
-
+  // TODO
   mouseUp(event) {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = false;
-    console.log(mouseDown);
+    console.log(this.settings.radius, this.areCoordsInsideSliderBar(coords));
+  }
+
+  areCoordsInsideSliderBar(coords) {
+    console.log(this.getAngleFromXAndY(coords));
+    const radiusLength = Math.abs(coords.x / Math.sin(this.getAngleFromXAndY(coords)));
+    const outsideR = this.settings.radius + (this.settings.backgroundCircleStrokeWidth / 2);
+    const insideR = this.settings.radius - (this.settings.backgroundCircleStrokeWidth / 2);
+    //console.log('radius: ', radiusLength, 'outside: ', outsideR, 'inside: ', insideR);
+    return (radiusLength > insideR) && (radiusLength < outsideR);
+  }
+  
+  getAngleFromXAndY(coords) {
+    return Math.atan(coords.x/coords.y);
   }
 
   getCoordsRelativelyToElementsCenter(event) {
     const rectangle = this.svgElem.getBoundingClientRect();
     var x = event.clientX - rectangle.x - (rectangle.width / 2);
     var y = event.clientY - rectangle.y - (rectangle.height / 2);
-    console.log(x,y);
+    //console.log(x,y);
     return {x, y};
   }
 
