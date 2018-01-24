@@ -128,6 +128,11 @@ class Slider {
     this.holderCircle.setAttribute('cx', positionOnBackgroundCircle.x);
     this.holderCircle.setAttribute('cy', positionOnBackgroundCircle.y);
     this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
+
+    //rerender labels
+    const labelStr = this.settings.label.trim().toLowerCase().replace(' ', '_');
+    var label = document.getElementById('label__' + labelStr);
+    label.innerHTML = angle;
   }
 
   renderLabels() {
@@ -150,7 +155,7 @@ class Slider {
       // Create number div for each slider
       const labelStr = slider.settings.label.trim().toLowerCase().replace(' ', '_');
       var numberDiv = document.createElement('div');
-      numberDiv.setAttribute('class', 'label__' + labelStr);
+      numberDiv.setAttribute('id', 'label__' + labelStr);
       labelDiv.appendChild(numberDiv);
 
       // Create rectangle TODO
@@ -316,13 +321,13 @@ new Slider({
   container: 'container2',
   color: 'red',
   radius: 70,
-  label: 'Transportation'
+  label: 'Transportation1'
 });
 new Slider({
   container: 'container2',
   color: 'blue',
   radius: 40,
-  label: 'Food'
+  label: 'Food1'
 });
 
 console.log(slidersPerContainer);
