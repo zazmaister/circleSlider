@@ -65,7 +65,7 @@ class Slider {
 
     this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this));
     this.svgElem.addEventListener('mouseup', this.mouseUp.bind(this));
-    this.svgElem.addEventListener('mousemove', this.mouseMove.bind(this));
+    window.addEventListener('mousemove', this.mouseMove.bind(this));
   }
 
   /**
