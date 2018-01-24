@@ -94,7 +94,7 @@ class Slider {
     svgGroup.appendChild(backgroundCircle);
 
     this.backgoundArcPath = document.createElementNS(this.xmlns, "path");
-    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0,this.getAngleFromXAndY({x: 0, y: 0})));
+    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0, this.getAngleFromXAndY({x: this.settings.radius, y: 0})));
     this.backgoundArcPath.style.fill = "none";
     this.backgoundArcPath.style.stroke = this.settings.color;
     this.backgoundArcPath.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
@@ -209,16 +209,22 @@ class Slider {
 new Slider({
   container: 'container',
   color: 'red',
-  radius: 100
+  radius: 70
 });
 new Slider({
   container: 'container',
   color: 'blue',
-  radius: 50
+  radius: 40
 });
 
 new Slider({
   container: 'container',
   color: 'green',
-  radius: 150
+  radius: 100
+});
+
+new Slider({
+  container: 'container',
+  color: 'green',
+  radius: 130
 });
