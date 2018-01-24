@@ -6,6 +6,7 @@ class Slider {
    * Create new slider.
    * @param {Object} options - Information about the slider.
    * @param {string} options.container - Container name.
+   * @param {string} options.color - Container name.
    * @param {number} options.minValue - Minimum value.
    * @param {number} options.maxValue - Maximum value.
    * @param {number} options.step - Step of slider.
@@ -22,8 +23,12 @@ class Slider {
       holderStrokeColor: 'grey',
       holderStrokeWidth: 2,
       containerWidth: 400,
+      color: 'red',
+      opacity: 0.5
     };
     this.settings = Object.assign({}, this.settings, options);
+
+    this.isActive = false;
 
     this.xmlns = 'http://www.w3.org/2000/svg';
     
@@ -40,6 +45,7 @@ class Slider {
     if(!this.svgElem) {
       this.svgElem = document.createElementNS(this.xmlns, 'svg');
       this.svgElem.setAttribute('version', 1.1);
+      this.svgElem.setAttribute('transform', 'rotate(-90)');
       this.svgElem.setAttribute('width', this.settings.containerWidth);
       this.svgElem.setAttribute('height', this.settings.containerWidth);
       this.svgElem.setAttribute('viewPort', `${this.settings.containerWidth}, ${this.settings.containerWidth}` );
@@ -87,18 +93,30 @@ class Slider {
     backgroundCircle.style.stroke = this.settings.backgroundCircleStrokeColor;
     svgGroup.appendChild(backgroundCircle);
 
+    this.backgoundArcPath = document.createElementNS(this.xmlns, "path");
+    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0,this.getAngleFromXAndY({x: 0, y: 0})));
+    this.backgoundArcPath.style.fill = "none";
+    this.backgoundArcPath.style.stroke = this.settings.color;
+    this.backgoundArcPath.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
+    this.backgoundArcPath.style.opacity = this.settings.opacity;
+    svgGroup.appendChild(this.backgoundArcPath);
+
     // Create holder
-    var holderCenter = this.getHolderCenter(0);
-    var holderCircle = document.createElementNS(this.xmlns, 'circle');
-    holderCircle.setAttribute('r', this.settings.hodlerDiameter / 2);
-    holderCircle.setAttribute('cx', holderCenter.x);
-    holderCircle.setAttribute('cy', holderCenter.y);
-    holderCircle.style.fill = this.settings.holderFillColor;
-    holderCircle.style.stroke = this.settings.holderStrokeColor;
-    holderCircle.style.strokeWidth = this.settings.holderStrokeWidth;
-    svgGroup.appendChild(holderCircle);
+    var holderCenter = this.getCenterOnBackgroundCircle(0);
+    this.holderCircle = document.createElementNS(this.xmlns, 'circle');
+    this.holderCircle.setAttribute('r', this.settings.hodlerDiameter / 2);
+    this.holderCircle.setAttribute('cx', holderCenter.x);
+    this.holderCircle.setAttribute('cy', holderCenter.y);
+    this.holderCircle.style.fill = this.settings.holderFillColor;
+    this.holderCircle.style.stroke = this.settings.holderStrokeColor;
+    this.holderCircle.style.strokeWidth = this.settings.holderStrokeWidth;
+    svgGroup.appendChild(this.holderCircle);
 
     this.svgElem.appendChild(svgGroup);
+  }
+  //TODO:coords are here temporary till i find the solution where to store them
+  rerenderSlider(coords) {
+    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
   }
 
   /**
@@ -113,29 +131,45 @@ class Slider {
     return (circumference / Math.floor(numberOfDashes)) - dashesWidth;
   }
 
-  getHolderCenter(angle) {
+  getCenterOnBackgroundCircle(angle) {
     const x = this.settings.containerWidth / 2 + this.settings.radius * Math.cos(angle);
     const y = this.settings.containerWidth / 2 + this.settings.radius * Math.sin(angle);
 
     return {x, y};
   }
 
+  describeArc(x, y, endAngle){
+    const start = this.getCenterOnBackgroundCircle(endAngle);
+    const end = this.getCenterOnBackgroundCircle(0);
+    const largeArcFlag = endAngle <= Math.PI ? "0" : "1";
+
+    const d = [
+        "M", start.x, start.y, 
+        "A", this.settings.radius, this.settings.radius, 0, largeArcFlag, 0, end.x, end.y
+    ].join(" ");
+
+    return d;       
+  }
+
   // TODO
   mouseDown(event) {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = true;
-    console.log(mouseDown);
+    this.isActive = this.areCoordsInsideSliderBar(coords);
+    if (this.isActive) {
+      this.rerenderSlider(coords);
+    }
   }
   // TODO
   mouseUp(event) {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = false;
-    console.log(this.settings.radius, this.areCoordsInsideSliderBar(coords));
+    this.isActive = false;
   }
 
-  areCoordsInsideSliderBar(coords) {
-    console.log(this.getAngleFromXAndY(coords));
-    const radiusLength = Math.abs(coords.x / Math.sin(this.getAngleFromXAndY(coords)));
+  areCoordsInsideSliderBar(coords) {//check
+    //console.log('ANGLE: ',this.getAngleFromXAndY(coords)*180/Math.PI);
+    const radiusLength = Math.abs(coords.y / Math.sin(this.getAngleFromXAndY(coords)));
     const outsideR = this.settings.radius + (this.settings.backgroundCircleStrokeWidth / 2);
     const insideR = this.settings.radius - (this.settings.backgroundCircleStrokeWidth / 2);
     //console.log('radius: ', radiusLength, 'outside: ', outsideR, 'inside: ', insideR);
@@ -143,39 +177,44 @@ class Slider {
   }
   
   getAngleFromXAndY(coords) {
-    return Math.atan(coords.x/coords.y);
+    const angle = Math.asin(coords.y/(Math.sqrt(Math.pow(coords.x, 2)+Math.pow(coords.y, 2))));
+
+    // Get full angle :)
+    if (coords.x < 0) {
+      return Math.PI - angle;
+    } else if (coords.y < 0) {
+      return 2*Math.PI + angle;
+    }
+    return angle
   }
 
   getCoordsRelativelyToElementsCenter(event) {
     const rectangle = this.svgElem.getBoundingClientRect();
     var x = event.clientX - rectangle.x - (rectangle.width / 2);
     var y = event.clientY - rectangle.y - (rectangle.height / 2);
-    //console.log(x,y);
+    
+    // Change x and y and inverse them relative to window coordinate system
+    const z = x;
+    x = -y;
+    y = z;
+    //console.log('COORDS',x,y);
     return {x, y};
   }
-
-  getChildByClassName(element, childClassName) {
-    var found = null;
-    for (var i = 0; i < element.childNodes.length; i++) {
-      if (element.childNodes[i].className == childClassName) {
-        found = element.childNodes[i];
-        break;
-      }        
-    }
-    return found;
-  } 
 }
 
 new Slider({
   container: 'container',
+  color: 'red',
   radius: 100
 });
 new Slider({
   container: 'container',
+  color: 'blue',
   radius: 50
 });
 
 new Slider({
   container: 'container',
+  color: 'green',
   radius: 150
 });
