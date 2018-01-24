@@ -23,7 +23,8 @@ class Slider {
       holderFillColor: 'white',
       holderStrokeColor: 'grey',
       holderStrokeWidth: 2,
-      containerWidth: 400,
+      svgWidth: 400,
+      sidebarWidth: 200,
       color: 'red',
       opacity: 0.5,
       label: 'Unknown Expense'
@@ -34,14 +35,17 @@ class Slider {
 
     this.xmlns = 'http://www.w3.org/2000/svg';
     
-    this.container = {};
+    this.container = {};//TODO REMOVE OBJECT 
     this.container.element = document.getElementById(this.settings.container);
     // Check if container exists, if not throw an error
     if(!this.container.element) {
       throw new Error('There is no such container. Change container name.');
     }
-    
-    
+
+    this.container.element.style.width = this.settings.sidebarWidth + this.settings.svgWidth;
+    this.container.element.style.display = 'flex';
+    this.container.element.style.height = this.settings.svgWidth;
+
     // Create svg element if it doesnt exists inside this container
     const svgElementId = this.settings.container + '__svg-slider';
     this.svgElem = document.getElementById(svgElementId);
@@ -50,9 +54,10 @@ class Slider {
       this.svgElem.setAttribute('id', svgElementId);
       this.svgElem.setAttribute('version', 1.1);
       this.svgElem.setAttribute('transform', 'rotate(-90)');
-      this.svgElem.setAttribute('width', this.settings.containerWidth);
-      this.svgElem.setAttribute('height', this.settings.containerWidth);
-      this.svgElem.setAttribute('viewPort', `${this.settings.containerWidth}, ${this.settings.containerWidth}` );
+      this.svgElem.setAttribute('width', this.settings.svgWidth);
+      this.svgElem.setAttribute('height', this.settings.svgWidth);
+      this.svgElem.setAttribute('viewPort', `${this.settings.svgWidth}, ${this.settings.svgWidth}` );
+      this.svgElem.style.margin = 'auto 0';
       this.container.element.appendChild(this.svgElem);
     }
 
@@ -61,7 +66,7 @@ class Slider {
     this.renderLabels();
 
     this.renderSlider(
-      this.settings.containerWidth, 
+      this.settings.svgWidth, 
       this.settings.backgroundCircleDashesWidth,
       this.settings.backgroundCircleWantedSpacesWidth  
     );
@@ -75,11 +80,11 @@ class Slider {
 
   /**
    * Append and render slider elements to svg in this container
-   * @param  {number} containerWidth - Width of container.
+   * @param  {number} svgWidth - Width of container.
    * @param  {number} dashesWidth - Width of dashes in circle.
    * @param  {number} wantedSpacesWidth - Wanted width of spaces between dashes.
    */
-  renderSlider(containerWidth, dashesWidth, wantedSpacesWidth) {
+  renderSlider(svgWidth, dashesWidth, wantedSpacesWidth) {
     // Create slider group of all slider elements
     var svgGroup = document.createElementNS(this.xmlns, 'g');
     
@@ -91,8 +96,8 @@ class Slider {
     var backgroundCircle = document.createElementNS(this.xmlns, 'circle');
     backgroundCircle.setAttribute('class', 'circle');
     backgroundCircle.setAttribute('r', this.settings.radius);
-    backgroundCircle.setAttribute('cx', containerWidth / 2);
-    backgroundCircle.setAttribute('cy', containerWidth / 2);
+    backgroundCircle.setAttribute('cx', svgWidth / 2);
+    backgroundCircle.setAttribute('cy', svgWidth / 2);
     backgroundCircle.setAttribute('fill', 'none');
     backgroundCircle.setAttribute('stroke-dasharray', `${dashesWidth}, ${spacesWidth}`);
     backgroundCircle.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
@@ -142,6 +147,9 @@ class Slider {
       container.removeChild(labelsDiv);
     labelsDiv = document.createElement('div');
     labelsDiv.setAttribute('id', this.settings.container+'__labels');
+    var center = document.createElement('div');
+    center.setAttribute('class', 'center');
+    labelsDiv.appendChild(center);
     container.insertBefore(labelsDiv, this.container.element.firstChild);
 
     // Create all labels
@@ -150,7 +158,7 @@ class Slider {
       var slider = slidersPerContainer[this.settings.container][i];
       var labelDiv = document.createElement('div');
       labelDiv.setAttribute('class', 'label');
-      labelsDiv.appendChild(labelDiv);
+      center.appendChild(labelDiv);
 
       // Create number div for each slider
       const labelStr = slider.settings.label.trim().toLowerCase().replace(' ', '_');
@@ -180,6 +188,15 @@ class Slider {
       labelDiv.appendChild(textDiv);
 
     }
+
+    // Applying styles
+    labelsDiv = document.getElementById(this.settings.container + '__labels');
+    labelsDiv.style.width = this.settings.sidebarWidth;
+    labelsDiv.style.height = this.settings.svgWidth;
+    labelsDiv.style.display = 'flex';
+    labelsDiv.style.justifyContent = 'center';
+    labelsDiv.style.alignItems = 'center';
+
   }
 
   /**
@@ -195,8 +212,8 @@ class Slider {
   }
 
   getCenterOnBackgroundCircle(angle) {
-    const x = this.settings.containerWidth / 2 + this.settings.radius * Math.cos(angle);
-    const y = this.settings.containerWidth / 2 + this.settings.radius * Math.sin(angle);
+    const x = this.settings.svgWidth / 2 + this.settings.radius * Math.cos(angle);
+    const y = this.settings.svgWidth / 2 + this.settings.radius * Math.sin(angle);
 
     return {x, y};
   }
@@ -328,6 +345,45 @@ new Slider({
   color: 'blue',
   radius: 40,
   label: 'Food1'
+});
+
+new Slider({
+  container: 'container3',
+  color: 'red',
+  radius: 70,
+  label: 'Transportation2'
+});
+new Slider({
+  container: 'container3',
+  color: 'blue',
+  radius: 40,
+  label: 'Food2'
+});
+
+new Slider({
+  container: 'container4',
+  color: 'red',
+  radius: 70,
+  label: 'Transportation3'
+});
+new Slider({
+  container: 'container4',
+  color: 'blue',
+  radius: 40,
+  label: 'Food3'
+});
+
+new Slider({
+  container: 'container5',
+  color: 'red',
+  radius: 70,
+  label: 'Transportation4'
+});
+new Slider({
+  container: 'container5',
+  color: 'blue',
+  radius: 40,
+  label: 'Food4'
 });
 
 console.log(slidersPerContainer);
