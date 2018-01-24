@@ -116,6 +116,10 @@ class Slider {
   }
   //TODO:coords are here temporary till i find the solution where to store them
   rerenderSlider(coords) {
+    const angle = this.getAngleFromXAndY(coords);
+    const positionOnBackgroundCircle = this.getCenterOnBackgroundCircle(angle);
+    this.holderCircle.setAttribute('cx', positionOnBackgroundCircle.x);
+    this.holderCircle.setAttribute('cy', positionOnBackgroundCircle.y);
     this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
   }
 
