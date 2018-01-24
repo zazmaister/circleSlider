@@ -1,4 +1,5 @@
 var mouseDown = false;
+var slidersPerContainer = {};
 /** Class representing a slider. */
 class Slider {
   
@@ -24,7 +25,8 @@ class Slider {
       holderStrokeWidth: 2,
       containerWidth: 400,
       color: 'red',
-      opacity: 0.5
+      opacity: 0.5,
+      label: 'Unknown Expense'
     };
     this.settings = Object.assign({}, this.settings, options);
 
@@ -41,9 +43,11 @@ class Slider {
     
     
     // Create svg element if it doesnt exists inside this container
-    this.svgElem = document.getElementById(this.settings.container).getElementsByTagName('svg')[0];
+    const svgElementId = this.settings.container + '__svg-slider';
+    this.svgElem = document.getElementById(svgElementId);
     if(!this.svgElem) {
       this.svgElem = document.createElementNS(this.xmlns, 'svg');
+      this.svgElem.setAttribute('id', svgElementId);
       this.svgElem.setAttribute('version', 1.1);
       this.svgElem.setAttribute('transform', 'rotate(-90)');
       this.svgElem.setAttribute('width', this.settings.containerWidth);
@@ -52,16 +56,17 @@ class Slider {
       this.container.element.appendChild(this.svgElem);
     }
 
-    var rect = this.svgElem.getBoundingClientRect();
-    console.log(rect);
-
-
+    this.pushToAndSortSliders();
+    
+    this.renderLabels();
 
     this.renderSlider(
       this.settings.containerWidth, 
       this.settings.backgroundCircleDashesWidth,
       this.settings.backgroundCircleWantedSpacesWidth  
     );
+    // Add to slidersPerContainer table object and sort them
+    
 
     this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this));
     window.addEventListener('mouseup', this.mouseUp.bind(this));
@@ -94,9 +99,10 @@ class Slider {
     backgroundCircle.style.stroke = this.settings.backgroundCircleStrokeColor;
     svgGroup.appendChild(backgroundCircle);
 
-    this.backgoundArcPath = document.createElementNS(this.xmlns, "path");
-    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0, this.getAngleFromXAndY({x: this.settings.radius, y: 0})));
-    this.backgoundArcPath.style.fill = "none";
+    //Create background arc path
+    this.backgoundArcPath = document.createElementNS(this.xmlns, 'path');
+    this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0, this.getAngleFromXAndY({x: this.settings.radius, y: 0})));
+    this.backgoundArcPath.style.fill = 'none';
     this.backgoundArcPath.style.stroke = this.settings.color;
     this.backgoundArcPath.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
     this.backgoundArcPath.style.opacity = this.settings.opacity;
@@ -121,7 +127,54 @@ class Slider {
     const positionOnBackgroundCircle = this.getCenterOnBackgroundCircle(angle);
     this.holderCircle.setAttribute('cx', positionOnBackgroundCircle.x);
     this.holderCircle.setAttribute('cy', positionOnBackgroundCircle.y);
-    this.backgoundArcPath.setAttribute("d", this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
+    this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
+  }
+
+  renderLabels() {
+    var container = this.container.element;
+    var labelsDiv = document.getElementById(this.settings.container+'__labels');
+    if (labelsDiv)
+      container.removeChild(labelsDiv);
+    labelsDiv = document.createElement('div');
+    labelsDiv.setAttribute('id', this.settings.container+'__labels');
+    container.insertBefore(labelsDiv, this.container.element.firstChild);
+
+    // Create all labels
+    for (var i = 0; i < slidersPerContainer[this.settings.container].length; i++) {
+      // Create label div for each slider
+      var slider = slidersPerContainer[this.settings.container][i];
+      var labelDiv = document.createElement('div');
+      labelDiv.setAttribute('class', 'label');
+      labelsDiv.appendChild(labelDiv);
+
+      // Create number div for each slider
+      const labelStr = slider.settings.label.trim().toLowerCase().replace(' ', '_');
+      var numberDiv = document.createElement('div');
+      numberDiv.setAttribute('class', 'label__' + labelStr);
+      labelDiv.appendChild(numberDiv);
+
+      // Create rectangle TODO
+      var svg = document.createElementNS(this.xmlns, 'svg');
+      svg.setAttribute('version', 1.1);
+      svg.setAttribute('width', 10);
+      svg.setAttribute('height', 5);
+      svg.setAttribute('viewPort', `${10}, ${5}` );
+      svg.setAttribute('class', i);
+
+      var rect = document.createElementNS(this.xmlns, 'rect');
+      rect.setAttribute('width', 10);
+      rect.setAttribute('height', 5);
+      rect.setAttribute('fill', slider.settings.color);
+      svg.appendChild(rect);
+      labelDiv.appendChild(svg);
+
+      // Create text div
+      var textDiv = document.createElement('div');
+      textDiv.setAttribute('class', 'text');
+      textDiv.innerHTML = slider.settings.label;
+      labelDiv.appendChild(textDiv);
+
+    }
   }
 
   /**
@@ -146,12 +199,12 @@ class Slider {
   describeArc(x, y, endAngle){
     const start = this.getCenterOnBackgroundCircle(endAngle);
     const end = this.getCenterOnBackgroundCircle(0);
-    const largeArcFlag = endAngle <= Math.PI ? "0" : "1";
+    const largeArcFlag = endAngle <= Math.PI ? '0' : '1';
 
     const d = [
-        "M", start.x, start.y, 
-        "A", this.settings.radius, this.settings.radius, 0, largeArcFlag, 0, end.x, end.y
-    ].join(" ");
+        'M', start.x, start.y, 
+        'A', this.settings.radius, this.settings.radius, 0, largeArcFlag, 0, end.x, end.y
+    ].join(' ');
 
     return d;       
   }
@@ -213,27 +266,63 @@ class Slider {
     //console.log('COORDS',x,y);
     return {x, y};
   }
+  
+  pushToAndSortSliders() {
+    if(!(this.settings.container in slidersPerContainer))
+      slidersPerContainer[this.settings.container] = []
+    slidersPerContainer[this.settings.container].push(this);
+    slidersPerContainer[this.settings.container].sort(this.compare);
+  }
+
+  compare(aSlider, bSlider) {
+    if (aSlider.settings.radius < bSlider.settings.radius) {
+      return 1;
+    }
+    if (aSlider.settings.radius > bSlider.settings.radius) {
+      return -1;
+    }
+    return 0;
+  }
 }
 
 new Slider({
   container: 'container',
   color: 'red',
-  radius: 70
+  radius: 70,
+  label: 'Transportation'
 });
 new Slider({
   container: 'container',
   color: 'blue',
-  radius: 40
+  radius: 40,
+  label: 'Food'
 });
 
 new Slider({
   container: 'container',
   color: 'green',
-  radius: 100
+  radius: 100,
+  label: 'Insurance'
 });
 
 new Slider({
   container: 'container',
   color: 'green',
-  radius: 130
+  radius: 130,
+  label: 'Health care'
 });
+
+new Slider({
+  container: 'container2',
+  color: 'red',
+  radius: 70,
+  label: 'Transportation'
+});
+new Slider({
+  container: 'container2',
+  color: 'blue',
+  radius: 40,
+  label: 'Food'
+});
+
+console.log(slidersPerContainer);
