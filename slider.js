@@ -53,7 +53,6 @@ class Slider {
       this.svgElem = document.createElementNS(this.xmlns, 'svg');
       this.svgElem.setAttribute('id', svgElementId);
       this.svgElem.setAttribute('version', 1.1);
-      this.svgElem.setAttribute('transform', 'rotate(-90)');
       this.svgElem.setAttribute('width', this.settings.svgWidth);
       this.svgElem.setAttribute('height', this.settings.svgWidth);
       this.svgElem.setAttribute('viewPort', `${this.settings.svgWidth}, ${this.settings.svgWidth}` );
@@ -106,7 +105,14 @@ class Slider {
 
     //Create background arc path
     this.backgoundArcPath = document.createElementNS(this.xmlns, 'path');
-    this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0, this.getAngleFromXAndY({x: this.settings.radius, y: 0})));
+    this.backgoundArcPath.setAttribute(
+      'd', 
+      this.describeArc(
+        0, 
+        0, 
+        this.getAngleFromXAndY({x: this.settings.radius, y: 0})
+      )
+    );
     this.backgoundArcPath.style.fill = 'none';
     this.backgoundArcPath.style.stroke = this.settings.color;
     this.backgoundArcPath.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
@@ -126,18 +132,18 @@ class Slider {
 
     this.svgElem.appendChild(svgGroup);
   }
-  //TODO:coords are here temporary till i find the solution where to store them
+
   rerenderSlider(coords) {
     const angle = this.getAngleFromXAndY(coords);
-    const positionOnBackgroundCircle = this.getCenterOnBackgroundCircle(angle);
+    const positionOnBackgroundCircle = this.getCenterOnBackgroundCircle(this.calcStepAngle(angle).angle);
     this.holderCircle.setAttribute('cx', positionOnBackgroundCircle.x);
     this.holderCircle.setAttribute('cy', positionOnBackgroundCircle.y);
-    this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0,this.getAngleFromXAndY(coords)));
+    this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0,this.calcStepAngle(this.getAngleFromXAndY(coords)).angle));
 
     //rerender labels
     const labelStr = this.settings.label.trim().toLowerCase().replace(' ', '_');
     var label = document.getElementById('label__' + labelStr);
-    label.innerHTML = angle;
+    label.innerHTML = this.calcStepAngle(angle).value;
   }
 
   renderLabels() {
@@ -199,6 +205,39 @@ class Slider {
 
   }
 
+  calcStepAngle(mouseAngle) {
+    const range = this.settings.maxValue - this.settings.minValue;
+    const steps = Math.floor(range / this.settings.step);
+    const stepsReminder = (range % this.settings.step) / this.settings.step;
+    const stepAngleCoefficient = 2*Math.PI / (steps + stepsReminder);
+
+
+    for(var step = 0; step <= steps; step++) {
+      const angleInGrad = step * stepAngleCoefficient;
+      if (step === steps) { 
+        if(stepsReminder === 0) {
+          return {angle: 2*Math.PI*0.9999, value: this.settings.maxValue};
+        }
+        if (mouseAngle < angleInGrad + (stepsReminder*stepAngleCoefficient/2))
+          return {angle: stepAngleCoefficient * step, value: step*this.settings.step + this.settings.minValue};
+        else
+          return {angle: 2*Math.PI*0.9999, value: this.settings.maxValue};
+      }
+      if ( mouseAngle < angleInGrad + (stepAngleCoefficient / 2)) {
+        return {angle: stepAngleCoefficient * step, value: step*this.settings.step+ this.settings.minValue};
+      }
+      
+    }
+
+  }
+
+
+  getLabelValueByStep(stepAngle) {
+    if(stepAngle < 2*Math.PI*0.9999)
+      return this.settings.maxValue;
+    
+  }
+
   /**
    * Calculate space width between dashes in background circle.
    * @param  {number} dashesWidth - Width of dashes in circle.
@@ -216,6 +255,12 @@ class Slider {
     const y = this.settings.svgWidth / 2 + this.settings.radius * Math.sin(angle);
 
     return {x, y};
+  }
+
+  getValueInDollars(coefficient) {
+    const range = this.settings.maxValue - this.settings.minValue;
+    const value = range * coefficient + this.settings.minValue;
+    return value;
   }
 
   describeArc(x, y, endAngle){
@@ -305,17 +350,27 @@ class Slider {
     }
     return 0;
   }
+
+  normalize(angle) {
+    return (angle-2*Math.PI)/(2*Math.PI)+1;
+  }
 }
 
 new Slider({
   container: 'container',
   color: 'red',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 70,
   label: 'Transportation'
 });
 new Slider({
   container: 'container',
   color: 'blue',
+  minValue: 0,
+  maxValue: 100,
+  step: 5,
   radius: 40,
   label: 'Food'
 });
@@ -323,6 +378,9 @@ new Slider({
 new Slider({
   container: 'container',
   color: 'green',
+  minValue: 5,
+  maxValue: 50,
+  step: 5,
   radius: 100,
   label: 'Insurance'
 });
@@ -330,6 +388,9 @@ new Slider({
 new Slider({
   container: 'container',
   color: 'green',
+  minValue: 0,
+  maxValue: 11.8,
+  step: 2.5,
   radius: 130,
   label: 'Health care'
 });
@@ -337,12 +398,18 @@ new Slider({
 new Slider({
   container: 'container2',
   color: 'red',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 70,
   label: 'Transportation1'
 });
 new Slider({
   container: 'container2',
   color: 'blue',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 40,
   label: 'Food1'
 });
@@ -350,12 +417,18 @@ new Slider({
 new Slider({
   container: 'container3',
   color: 'red',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 70,
   label: 'Transportation2'
 });
 new Slider({
   container: 'container3',
   color: 'blue',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 40,
   label: 'Food2'
 });
@@ -363,12 +436,18 @@ new Slider({
 new Slider({
   container: 'container4',
   color: 'red',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 70,
   label: 'Transportation3'
 });
 new Slider({
   container: 'container4',
   color: 'blue',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 40,
   label: 'Food3'
 });
@@ -376,12 +455,18 @@ new Slider({
 new Slider({
   container: 'container5',
   color: 'red',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 70,
   label: 'Transportation4'
 });
 new Slider({
   container: 'container5',
   color: 'blue',
+  minValue: 25,
+  maxValue: 725,
+  step: 25,
   radius: 40,
   label: 'Food4'
 });
