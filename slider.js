@@ -62,6 +62,7 @@ class Slider {
 
     this.pushToAndSortSliders();
     
+    
     this.renderLabels();
 
     this.renderSlider(
@@ -170,7 +171,9 @@ class Slider {
       const labelStr = slider.settings.label.trim().toLowerCase().replace(' ', '_');
       var numberDiv = document.createElement('div');
       numberDiv.setAttribute('id', 'label__' + labelStr);
+      numberDiv.innerHTML = slider.settings.minValue;
       labelDiv.appendChild(numberDiv);
+      
 
       // Create rectangle TODO
       var svg = document.createElementNS(this.xmlns, 'svg');
