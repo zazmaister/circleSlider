@@ -1,5 +1,12 @@
+/**
+ * @typedef {Object} Point
+ * @property {number} x The X Coordinate
+ * @property {number} y The Y Coordinate
+ */
+
 var mouseDown = false;
 var slidersPerContainer = {};
+window.blockMenuHeaderScroll = false;
 /** Class representing a slider. */
 class Slider {
   
@@ -12,39 +19,51 @@ class Slider {
    * @param {number} options.maxValue - Maximum value.
    * @param {number} options.step - Step of slider.
    * @param {number} options.radius - Radius of slider circle.
+   * @param {string} [options.label=Unknown Expense] - Slider expense label.
+   * @param {number} [options.backgroundCircleDashesWidth=6] - Slider expense label.
+   * @param {number} [options.backgroundCircleWantedSpacesWidth=3] - Slider expense label.
+   * @param {number} [options.backgroundCircleStrokeWidth=20] - Slider expense label.
+   * @param {string} [options.backgroundCircleStrokeColor=#D5D5D5] - Slider expense label.
+   * @param {number} [options.hodlerDiameter=24] - Slider expense label.
+   * @param {string} [options.holderFillColor=white] - Slider expense label.
+   * @param {string} [options.holderStrokeColor=#C0C0C0] - Slider expense label.
+   * @param {number} [options.holderStrokeWidth=2] - Slider expense label.
+   * @param {number} [options.svgWidth=400] - Slider expense label.
+   * @param {number} [options.sidebarWidth=200] - Slider expense label.
+   * @param {number} [options.opacity=0.7] - Slider expense label.
    */
   constructor(options) {
+    // Default settings
     this.settings = {
+      label: 'Unknown Expense',
       backgroundCircleDashesWidth: 6,
       backgroundCircleWantedSpacesWidth: 3,
       backgroundCircleStrokeWidth: 20,
-      backgroundCircleStrokeColor: 'grey',
+      backgroundCircleStrokeColor: '#D5D5D5',
       hodlerDiameter: 24,
       holderFillColor: 'white',
-      holderStrokeColor: 'grey',
+      holderStrokeColor: '#C0C0C0',
       holderStrokeWidth: 2,
       svgWidth: 400,
       sidebarWidth: 200,
-      color: 'red',
-      opacity: 0.5,
-      label: 'Unknown Expense'
+      opacity: 0.7
     };
+    // Overrider settings with options if any
     this.settings = Object.assign({}, this.settings, options);
 
     this.isActive = false;
 
     this.xmlns = 'http://www.w3.org/2000/svg';
-    
-    this.container = {};//TODO REMOVE OBJECT 
-    this.container.element = document.getElementById(this.settings.container);
+     
+    this.container = document.getElementById(this.settings.container);
     // Check if container exists, if not throw an error
-    if(!this.container.element) {
+    if(!this.container) {
       throw new Error('There is no such container. Change container name.');
     }
 
-    this.container.element.style.width = this.settings.sidebarWidth + this.settings.svgWidth;
-    this.container.element.style.display = 'flex';
-    this.container.element.style.height = this.settings.svgWidth;
+    this.container.style.width = this.settings.sidebarWidth + this.settings.svgWidth;
+    this.container.style.display = 'flex';
+    this.container.style.height = this.settings.svgWidth;
 
     // Create svg element if it doesnt exists inside this container
     const svgElementId = this.settings.container + '__svg-slider';
@@ -57,49 +76,39 @@ class Slider {
       this.svgElem.setAttribute('height', this.settings.svgWidth);
       this.svgElem.setAttribute('viewPort', `${this.settings.svgWidth}, ${this.settings.svgWidth}` );
       this.svgElem.style.margin = 'auto 0';
-      this.container.element.appendChild(this.svgElem);
+      this.container.appendChild(this.svgElem);
     }
 
     this.pushToAndSortSliders();
     
-    
     this.renderLabels();
-
-    this.renderSlider(
-      this.settings.svgWidth, 
-      this.settings.backgroundCircleDashesWidth,
-      this.settings.backgroundCircleWantedSpacesWidth  
-    );
-    // Add to slidersPerContainer table object and sort them
+    this.renderSlider();
     
-
-    this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this));
-    window.addEventListener('mouseup', this.mouseUp.bind(this));
-    window.addEventListener('mousemove', this.mouseMove.bind(this));
+    // Add event listeners to window and this.svgElem. Set passive to false because of thrown warnings.
+    this.svgElem.addEventListener('mousedown', this.mouseDown.bind(this),  { passive: false });
+    window.addEventListener('mouseup', this.mouseUp.bind(this),  { passive: false });
+    window.addEventListener('mousemove', this.mouseMove.bind(this),  { passive: false });
+    this.svgElem.addEventListener('touchstart', this.mouseDown.bind(this),  { passive: false });
+    window.addEventListener('touchend', this.mouseUp.bind(this),  { passive: false });
+    window.addEventListener('touchmove', this.mouseMove.bind(this),  { passive: false });
   }
 
   /**
    * Append and render slider elements to svg in this container
-   * @param  {number} svgWidth - Width of container.
-   * @param  {number} dashesWidth - Width of dashes in circle.
-   * @param  {number} wantedSpacesWidth - Wanted width of spaces between dashes.
    */
-  renderSlider(svgWidth, dashesWidth, wantedSpacesWidth) {
+  renderSlider() {
     // Create slider group of all slider elements
     var svgGroup = document.createElementNS(this.xmlns, 'g');
     
     // Create backgound dashed circle
-    const spacesWidth = this.calcSpaceWidth(
-      dashesWidth,
-      wantedSpacesWidth
-    )
+    const spacesWidth = this.calcSpaceWidth();
     var backgroundCircle = document.createElementNS(this.xmlns, 'circle');
     backgroundCircle.setAttribute('class', 'circle');
     backgroundCircle.setAttribute('r', this.settings.radius);
-    backgroundCircle.setAttribute('cx', svgWidth / 2);
-    backgroundCircle.setAttribute('cy', svgWidth / 2);
+    backgroundCircle.setAttribute('cx', this.settings.svgWidth / 2);
+    backgroundCircle.setAttribute('cy', this.settings.svgWidth / 2);
     backgroundCircle.setAttribute('fill', 'none');
-    backgroundCircle.setAttribute('stroke-dasharray', `${dashesWidth}, ${spacesWidth}`);
+    backgroundCircle.setAttribute('stroke-dasharray', `${this.settings.backgroundCircleDashesWidth}, ${spacesWidth}`);
     backgroundCircle.style.strokeWidth = this.settings.backgroundCircleStrokeWidth;
     backgroundCircle.style.stroke = this.settings.backgroundCircleStrokeColor;
     svgGroup.appendChild(backgroundCircle);
@@ -134,6 +143,12 @@ class Slider {
     this.svgElem.appendChild(svgGroup);
   }
 
+  /**
+   * Rerender slider method.
+   * @param  {object} coords - Coordinates of mouse position
+   * @param  {number} coords.x - x coordinate.
+   * @param  {number} coords.y - y coordinate. 
+   */
   rerenderSlider(coords) {
     const angle = this.getAngleFromXAndY(coords);
     const positionOnBackgroundCircle = this.getCenterOnBackgroundCircle(this.calcStepAngle(angle).angle);
@@ -141,14 +156,17 @@ class Slider {
     this.holderCircle.setAttribute('cy', positionOnBackgroundCircle.y);
     this.backgoundArcPath.setAttribute('d', this.describeArc(0, 0,this.calcStepAngle(this.getAngleFromXAndY(coords)).angle));
 
-    //rerender labels
+    // Update vslues of labels.
     const labelStr = this.settings.label.trim().toLowerCase().replace(' ', '_');
     var label = document.getElementById('label__' + labelStr);
-    label.innerHTML = this.calcStepAngle(angle).value;
+    label.innerHTML = '$' + this.calcStepAngle(angle).value;
   }
-
+  
+  /**
+   * First render of labels
+   */
   renderLabels() {
-    var container = this.container.element;
+    var container = this.container;
     var labelsDiv = document.getElementById(this.settings.container+'__labels');
     if (labelsDiv)
       container.removeChild(labelsDiv);
@@ -156,8 +174,9 @@ class Slider {
     labelsDiv.setAttribute('id', this.settings.container+'__labels');
     var center = document.createElement('div');
     center.setAttribute('class', 'center');
+    center.style.width = '200px';
     labelsDiv.appendChild(center);
-    container.insertBefore(labelsDiv, this.container.element.firstChild);
+    container.insertBefore(labelsDiv, this.container.firstChild);
 
     // Create all labels
     for (var i = 0; i < slidersPerContainer[this.settings.container].length; i++) {
@@ -165,34 +184,49 @@ class Slider {
       var slider = slidersPerContainer[this.settings.container][i];
       var labelDiv = document.createElement('div');
       labelDiv.setAttribute('class', 'label');
+      labelDiv.style.display = 'flex';
+      labelDiv.style.alignItems = 'baseline';
       center.appendChild(labelDiv);
 
       // Create number div for each slider
       const labelStr = slider.settings.label.trim().toLowerCase().replace(' ', '_');
       var numberDiv = document.createElement('div');
       numberDiv.setAttribute('id', 'label__' + labelStr);
-      numberDiv.innerHTML = slider.settings.minValue;
+      numberDiv.style.width = '40%';
+      numberDiv.style.textAlign = 'right';
+      numberDiv.style.fontSize = '30px';
+      numberDiv.style.fontWeight = 900;
+      numberDiv.innerHTML = '$' + slider.settings.minValue;
       labelDiv.appendChild(numberDiv);
       
 
       // Create rectangle TODO
       var svg = document.createElementNS(this.xmlns, 'svg');
       svg.setAttribute('version', 1.1);
-      svg.setAttribute('width', 10);
-      svg.setAttribute('height', 5);
-      svg.setAttribute('viewPort', `${10}, ${5}` );
+      svg.setAttribute('width', 15);
+      svg.setAttribute('height', 9);
+      svg.setAttribute('viewPort', `${15}, ${9}` );
       svg.setAttribute('class', i);
+      svg.style.width = '20%';
+      svg.style.maxWidth = '15px';
+      svg.style.display = 'block';
+      svg.style.position = 'relative';
+      svg.style.bottom = '-6px';
+      svg.style.margin = 'auto';
 
       var rect = document.createElementNS(this.xmlns, 'rect');
-      rect.setAttribute('width', 10);
-      rect.setAttribute('height', 5);
+      rect.setAttribute('width', 15);
+      rect.setAttribute('height', 9);
       rect.setAttribute('fill', slider.settings.color);
       svg.appendChild(rect);
       labelDiv.appendChild(svg);
 
       // Create text div
-      var textDiv = document.createElement('div');
+      var textDiv = document.createElement('p');
       textDiv.setAttribute('class', 'text');
+      textDiv.style.width = '40%';
+      textDiv.style.textAlign = 'left';
+      textDiv.style.fontSize = '12px';
       textDiv.innerHTML = slider.settings.label;
       labelDiv.appendChild(textDiv);
 
@@ -203,17 +237,20 @@ class Slider {
     labelsDiv.style.width = this.settings.sidebarWidth;
     labelsDiv.style.height = this.settings.svgWidth;
     labelsDiv.style.display = 'flex';
-    labelsDiv.style.justifyContent = 'center';
     labelsDiv.style.alignItems = 'center';
 
   }
 
+  
+  /**
+   * Calculation of step relative to mouse angle.
+   * @param  {number} mouseAngle - Mouse angle in gradians
+   */
   calcStepAngle(mouseAngle) {
     const range = this.settings.maxValue - this.settings.minValue;
     const steps = Math.floor(range / this.settings.step);
     const stepsReminder = (range % this.settings.step) / this.settings.step;
     const stepAngleCoefficient = 2*Math.PI / (steps + stepsReminder);
-
 
     for(var step = 0; step <= steps; step++) {
       const angleInGrad = step * stepAngleCoefficient;
@@ -234,38 +271,46 @@ class Slider {
 
   }
 
-
-  getLabelValueByStep(stepAngle) {
-    if(stepAngle < 2*Math.PI*0.9999)
-      return this.settings.maxValue;
-    
+  /**
+   * Calculate space width between dashes in background circle.
+   * @return {number} Returns correct width of spaces between dashes.
+   */
+  calcSpaceWidth() {
+    const circumference = (2 * Math.PI * this.settings.radius);
+    const numberOfDashes = circumference / (this.settings.backgroundCircleDashesWidth + this.settings.backgroundCircleWantedSpacesWidth);
+    return (circumference / Math.floor(numberOfDashes)) - this.settings.backgroundCircleDashesWidth;
   }
 
   /**
-   * Calculate space width between dashes in background circle.
-   * @param  {number} dashesWidth - Width of dashes in circle.
-   * @param  {number} wantedSpacesWidth - Wanted width of spaces between dashes.
-   * @return {number} Returns correct width of spaces between dashes.
+   * Calculate coordinates of holder center.
+   * @param  {number} angle - Angle of mouse position in gradians.
+   * @returns {Point} Calculated location.
    */
-  calcSpaceWidth(dashesWidth, wantedSpacesWidth) {
-    const circumference = (2 * Math.PI * this.settings.radius);
-    const numberOfDashes = circumference / (dashesWidth + wantedSpacesWidth);
-    return (circumference / Math.floor(numberOfDashes)) - dashesWidth;
-  }
-
   getCenterOnBackgroundCircle(angle) {
     const x = this.settings.svgWidth / 2 + this.settings.radius * Math.cos(angle);
     const y = this.settings.svgWidth / 2 + this.settings.radius * Math.sin(angle);
 
     return {x, y};
   }
-
+  
+  /**
+   * Calculate value of the slider in dollars
+   * @param  {number} coefficient - Normalized value of slider angle(mouse position).
+   * @returns {number} Value in dollars
+   */
   getValueInDollars(coefficient) {
     const range = this.settings.maxValue - this.settings.minValue;
     const value = range * coefficient + this.settings.minValue;
     return value;
   }
 
+  /**
+   * Description of arc for svg element(Arc between zero and holder(background)).
+   * @param  {number} x - x coordinate.
+   * @param  {number} y - y coordinate.
+   * @param  {number} endAngle - Angle of mouse position.
+   * @returns {string} String of arc description.
+   */
   describeArc(x, y, endAngle){
     const start = this.getCenterOnBackgroundCircle(endAngle);
     const end = this.getCenterOnBackgroundCircle(0);
@@ -279,22 +324,38 @@ class Slider {
     return d;       
   }
 
-  // TODO
+  /**
+   * Trigger method on mousedown or touchstart event. On event rerenderSlider 
+   * and set state of slider.
+   * @param  {object} event - Event object.
+   */
   mouseDown(event) {
+    event.preventDefault();
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = true;
+    window.blockMenuHeaderScroll = true;
     this.isActive = this.areCoordsInsideSliderBar(coords);
     if (this.isActive) {
       this.rerenderSlider(coords);
     }
   }
-  // TODO
+
+  /**
+   * Trigger method on mouseup or touchend event. On event set state of slider.
+   * @param  {object} event - Event object.
+   */
   mouseUp(event) {
+    event.preventDefault();
     const coords = this.getCoordsRelativelyToElementsCenter(event);
     mouseDown = false;
+    window.blockMenuHeaderScroll = false;
     this.isActive = false;
   }
-  // TODO
+  
+  /**
+   * Trigger method on mousemove or touchmove event. On event rerenderSlider.
+   * @param  {object} event - Event object.
+   */
   mouseMove(event) {
     const coords = this.getCoordsRelativelyToElementsCenter(event);
 
@@ -304,11 +365,10 @@ class Slider {
   }
 
   areCoordsInsideSliderBar(coords) {//check
-    //console.log('ANGLE: ',this.getAngleFromXAndY(coords)*180/Math.PI);
     const radiusLength = Math.abs(coords.y / Math.sin(this.getAngleFromXAndY(coords)));
     const outsideR = this.settings.radius + (this.settings.backgroundCircleStrokeWidth / 2);
     const insideR = this.settings.radius - (this.settings.backgroundCircleStrokeWidth / 2);
-    //console.log('radius: ', radiusLength, 'outside: ', outsideR, 'inside: ', insideR);
+
     return (radiusLength > insideR) && (radiusLength < outsideR);
   }
   
@@ -326,14 +386,15 @@ class Slider {
 
   getCoordsRelativelyToElementsCenter(event) {
     const rectangle = this.svgElem.getBoundingClientRect();
-    var x = event.clientX - rectangle.x - (rectangle.width / 2);
-    var y = event.clientY - rectangle.y - (rectangle.height / 2);
+
+    // TODO throwing error
+    var x = (event.clientX||event.changedTouches[0].pageX)  - rectangle.x - (rectangle.width / 2);
+    var y = (event.clientY||event.changedTouches[0].pageY) - rectangle.y - (rectangle.height / 2);
     
     // Change x and y and inverse them relative to window coordinate system
     const z = x;
     x = -y;
     y = z;
-    //console.log('COORDS',x,y);
     return {x, y};
   }
   
@@ -361,7 +422,7 @@ class Slider {
 
 new Slider({
   container: 'container',
-  color: 'red',
+  color: '#F3781C',
   minValue: 25,
   maxValue: 725,
   step: 25,
@@ -370,7 +431,7 @@ new Slider({
 });
 new Slider({
   container: 'container',
-  color: 'blue',
+  color: 'red',
   minValue: 0,
   maxValue: 100,
   step: 5,
@@ -390,17 +451,27 @@ new Slider({
 
 new Slider({
   container: 'container',
-  color: 'green',
+  color: '#0074B3',
   minValue: 0,
-  maxValue: 11.8,
+  maxValue: 11,
   step: 2.5,
   radius: 130,
   label: 'Health care'
 });
 
 new Slider({
+  container: 'container',
+  color: '#674079',
+  minValue: 0,
+  maxValue: 11,
+  step: 2.5,
+  radius: 160,
+  label: 'Entertainment'
+});
+
+new Slider({
   container: 'container2',
-  color: 'red',
+  color: '#F3781C',
   minValue: 25,
   maxValue: 725,
   step: 25,
@@ -473,5 +544,3 @@ new Slider({
   radius: 40,
   label: 'Food4'
 });
-
-console.log(slidersPerContainer);
