@@ -19,17 +19,17 @@ class Slider {
    * @param {number} options.step - Step of slider.
    * @param {number} options.radius - Radius of slider circle.
    * @param {string} [options.label=Unknown Expense] - Slider expense label.
-   * @param {number} [options.bcDashesWidth=6] - Slider expense label.
-   * @param {number} [options.bcWantedSpacesWidth=3] - Slider expense label.
-   * @param {number} [options.bcStrokeWidth=20] - Slider expense label.
-   * @param {string} [options.bcStrokeColor=#D5D5D5] - Slider expense label.
-   * @param {number} [options.hodlerDiameter=24] - Slider expense label.
-   * @param {string} [options.holderFillColor=white] - Slider expense label.
-   * @param {string} [options.holderStrokeColor=#C0C0C0] - Slider expense label.
-   * @param {number} [options.holderStrokeWidth=2] - Slider expense label.
-   * @param {number} [options.svgWidth=400] - Slider expense label.
-   * @param {number} [options.sidebarWidth=200] - Slider expense label.
-   * @param {number} [options.opacity=0.7] - Slider expense label.
+   * @param {number} [options.bcDashesWidth=6] - Width of dashes
+   * @param {number} [options.bcWantedSpacesWidth=3] - Wanted spaces width.
+   * @param {number} [options.bcStrokeWidth=20] - Stroke width.
+   * @param {string} [options.bcStrokeColor=#D5D5D5] - Stroke color.
+   * @param {number} [options.hodlerDiameter=24] - Holder diameter.
+   * @param {string} [options.holderFillColor=white] - Holder fill color.
+   * @param {string} [options.holderStrokeColor=#C0C0C0] - Holder stroke color.
+   * @param {number} [options.holderStrokeWidth=2] - Holder stroke width.
+   * @param {number} [options.svgWidth=400] - SVG width
+   * @param {number} [options.sidebarWidth=200] - sidebar width.
+   * @param {number} [options.opacity=0.7] - Opacity of sliders bacground bar.
    */
   constructor(options) {
     // Default settings
@@ -49,6 +49,7 @@ class Slider {
     };
     // Overrider settings with options if any
     this.settings = Object.assign({}, this.settings, options);
+    this.checkSettings();
 
     this.isActive = false;
 
@@ -400,15 +401,15 @@ class Slider {
    */
   getCoordsRelativelyToElementsCenter(event) {
     const rectangle = this.svgElem.getBoundingClientRect();
-    
-    var out = {x:0, y:0};
+
+    let out = {x: 0, y: 0};
     if(event.type == 'touchstart' || event.type == 'touchmove' || event.type == 'touchend'){
       var touch = event.touches[0] || event.changedTouches[0];
-      out.x = touch.pageX;
-      out.y = touch.pageY;
+      out.x = touch.clientX;
+      out.y = touch.clientY;
     } else if (event.type == 'mousedown' || event.type == 'mouseup' || event.type == 'mousemove') {
-      out.x = event.pageX;
-      out.y = event.pageY;
+      out.x = event.clientX;
+      out.y = event.clientY;
     }
     // TODO throwing error
     var x = out.x - rectangle.x - (rectangle.width / 2);
@@ -450,6 +451,31 @@ class Slider {
    */
   normalize(angle) {
     return (angle-2*Math.PI)/(2*Math.PI)+1;
+  }
+
+  checkSettings() {
+    const container = document.getElementById(this.settings.container);
+    if (container===null) throw new Error(this.errorMsg('container_not_found', this.settings.container));
+    if (this.settings.color === undefined) throw new Error(this.errorMsg('not_specified', 'color'));
+    if (this.settings.minValue === undefined) throw new Error(this.errorMsg('not_specified', 'minValue'));
+    if (this.settings.maxValue === undefined) throw new Error(this.errorMsg('not_specified', 'maxValue'));
+    if (isNaN(this.settings.minValue)) throw new Error(this.errorMsg('not_a_number', 'minValue'));
+    if (isNaN(this.settings.maxValue)) throw new Error(this.errorMsg('not_a_number', 'maxValue'));
+    if (this.settings.minValue >= this.settings.maxValue) throw new Error(this.errorMsg('min_gte_max'));
+    if (this.settings.step === undefined) throw new Error(this.errorMsg('not_specified', 'step'));
+    if (isNaN(this.settings.step)) throw new Error(this.errorMsg('not_a_number', 'step'));
+    if (this.settings.radius === undefined) throw new Error(this.errorMsg('not_specified', 'radius'));
+    if (isNaN(this.settings.radius)) throw new Error(this.errorMsg('not_a_number', 'radius'));
+  }
+
+  errorMsg(id, valueName) {
+    const errorMessages = {
+      container_not_found: `Container with id '${valueName}' doesnt exist in DOM.`,
+      not_specified: `'${valueName}' must be declared in Slider options.`,
+      not_a_number: `'${valueName}' must be number.`,
+      min_gte_max: `'minValue' should not be greater or equal 'maxValue'`
+    };
+    return errorMessages[id];
   }
 }
 
@@ -509,7 +535,20 @@ new Slider({
   maxValue: 725,
   step: 25,
   radius: 70,
-  label: 'Transportation1'
+  label: 'Transportation1',
+
+  bcDashesWidth: 16,
+  bcWantedSpacesWidth: 13,
+  bcStrokeWidth: 30,
+  bcStrokeColor: 'red',
+  hodlerDiameter: 34,
+  holderFillColor: 'orange',
+  holderStrokeColor: '#C0C0C0',
+  holderStrokeWidth: 5,
+  svgWidth: 400,
+  sidebarWidth: 200,
+  opacity: 1
+
 });
 new Slider({
   container: 'container2',
@@ -517,63 +556,40 @@ new Slider({
   minValue: 25,
   maxValue: 725,
   step: 25,
-  radius: 40,
-  label: 'Food1'
+  radius: 20,
+  label: 'Food1',
+
+  bcDashesWidth: 16,
+  bcWantedSpacesWidth: 13,
+  bcStrokeWidth: 30,
+  bcStrokeColor: 'red',
+  hodlerDiameter: 34,
+  holderFillColor: 'orange',
+  holderStrokeColor: '#C0C0C0',
+  holderStrokeWidth: 5,
+  svgWidth: 400,
+  sidebarWidth: 200,
+  opacity: 1
 });
 
 new Slider({
-  container: 'container3',
-  color: 'red',
+  container: 'container2',
+  color: 'brown',
   minValue: 25,
   maxValue: 725,
   step: 25,
-  radius: 70,
-  label: 'Transportation2'
-});
-new Slider({
-  container: 'container3',
-  color: 'blue',
-  minValue: 25,
-  maxValue: 725,
-  step: 25,
-  radius: 40,
-  label: 'Food2'
-});
+  radius: 120,
+  label: 'Food1',
 
-new Slider({
-  container: 'container4',
-  color: 'red',
-  minValue: 25,
-  maxValue: 725,
-  step: 25,
-  radius: 70,
-  label: 'Transportation3'
-});
-new Slider({
-  container: 'container4',
-  color: 'blue',
-  minValue: 25,
-  maxValue: 725,
-  step: 25,
-  radius: 40,
-  label: 'Food3'
-});
-
-new Slider({
-  container: 'container5',
-  color: 'red',
-  minValue: 25,
-  maxValue: 725,
-  step: 25,
-  radius: 70,
-  label: 'Transportation4'
-});
-new Slider({
-  container: 'container5',
-  color: 'blue',
-  minValue: 25,
-  maxValue: 725,
-  step: 25,
-  radius: 40,
-  label: 'Food4'
+  bcDashesWidth: 16,
+  bcWantedSpacesWidth: 13,
+  bcStrokeWidth: 30,
+  bcStrokeColor: 'red',
+  hodlerDiameter: 34,
+  holderFillColor: 'orange',
+  holderStrokeColor: '#C0C0C0',
+  holderStrokeWidth: 5,
+  svgWidth: 400,
+  sidebarWidth: 200,
+  opacity: 1
 });
